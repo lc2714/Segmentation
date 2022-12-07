@@ -20,10 +20,10 @@ import cv2
 from matplotlib import pyplot as plt
 MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
-# Download COCO trained weights from Releases if needed
+
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
-# Directory of images to run detection on
+
 IMAGE_DIR = os.path.join(ROOT_DIR, "images")
 !wget http://images.cocodataset.org/zips/train2014.zip
 !unzip -q train2014.zip
@@ -52,23 +52,17 @@ model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
 model.load_weights(COCO_MODEL_PATH, by_name=True)
 dataset_train= InferenceConfig(path_input = "/content/train2014" , path_mask = "/content/mask_train_2014/" , batch_size = batch_size , image_size = image_size)
 dataset_val = InferenceConfig(path_input =  "/content/val2014", path_mask =  "/content/mask_val_2014", batch_size = batch_size , image_size = image_size)
-# Train the head branches
-# Passing layers="heads" freezes all layers except the head
-# layers. You can also pass a regular expression to select
-# which layers to train by name pattern.
+
 model.train(dataset_train, dataset_val, 
             learning_rate=config.LEARNING_RATE, 
             epochs=1, 
             layers='heads')
- # Fine tune all layers
-# Passing layers="all" trains all layers. You can also 
-# pass a regular expression to select which layers to
-# train by name pattern.
+ 
 model.train(dataset_train, dataset_val, 
             learning_rate=config.LEARNING_RATE / 10,
             epochs=2, 
             layers="all")
- # Test on a random image
+
 image_id = random.choice(dataset_val.image_ids)
 original_image, image_meta, gt_class_id, gt_bbox, gt_mask =\
     modellib.load_image_gt(dataset_val, inference_config, 
